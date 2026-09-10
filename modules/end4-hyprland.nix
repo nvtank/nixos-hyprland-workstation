@@ -129,7 +129,7 @@ let
 
   end4Setup = pkgs.writeShellApplication {
     name = "end4-setup";
-    runtimeInputs = with pkgs; [ coreutils gnused rsync gnutar gzip ];
+    runtimeInputs = with pkgs; [ coreutils findutils gnused rsync gnutar gzip ];
     text = ''
       set -euo pipefail
 
@@ -171,16 +171,25 @@ let
 
       for staging_dir in "$config_root/hypr.end4-new" "$config_root/quickshell.end4-new"; do
         if [[ -e "$staging_dir" ]]; then
-          chmod -R u+w "$staging_dir"
-          rm -rf "''${staging_dir:?}"
+          chmod -R u+w "$staging_dir" 2>/dev/null || true
+          rm -rf "''${staging_dir:?}" || {
+            # If rm fails, try harder with find
+            find "$staging_dir" -type d -exec chmod u+w {} + 2>/dev/null || true
+            find "$staging_dir" -type f -exec chmod u+w {} + 2>/dev/null || true
+            rm -rf "''${staging_dir:?}"
+          }
         fi
       done
       mkdir -p "$config_root/hypr.end4-new" "$config_root/quickshell.end4-new"
 
       rsync -a --no-owner --no-group ${inputs.illogical-impulse}/dots/.config/hypr/ "$config_root/hypr.end4-new/"
+      chmod -R u+w "$config_root/hypr.end4-new"
+      
       rsync -a --no-owner --no-group ${inputs.illogical-impulse}/dots/.config/quickshell/ "$config_root/quickshell.end4-new/"
-      chmod -R u+w "$config_root/hypr.end4-new" "$config_root/quickshell.end4-new"
+      chmod -R u+w "$config_root/quickshell.end4-new"
+      
       rsync -a --no-owner --no-group --exclude='.git' ${inputs.end4-pc}/ "$config_root/quickshell.end4-new/end4-pC/"
+      chmod -R u+w "$config_root/quickshell.end4-new"
 
       # A crash/restart must not leave more than one shell instance creating
       # layer surfaces. Keep this patch next to the upstream config import so
@@ -197,7 +206,37 @@ let
       # keep compositor animations enabled for smooth workspace transitions.
       sed -i 's/natural_scroll = false/natural_scroll = true/' \
         "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
-      sed -i 's/animations = { enabled = false }/animations = { enabled = true }/' \
+      
+      # Replace the disabled animations with a full animation config for smooth
+      # workspace switching and window movement transitions. Inject directly into
+      # main.lua instead of using source to avoid syntax issues.
+      sed -i '/hl\.config({ animations = { enabled = false } })/d' \
+        "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
+      
+      # Insert the full animations config after the "layout = dwindle" line
+      sed -i '/hl\.config({ general = { layout = "dwindle" } })/a\
+hl.config({ \
+    animations = { \
+        enabled = true,\
+        bezier = {\
+            "wind, 0.05, 0.9, 0.1, 1.05",\
+            "winIn, 0.1, 1.1, 0.1, 1.1",\
+            "winOut, 0.3, -0.3, 0, 1",\
+            "liner, 1, 1, 1, 1"\
+        },\
+        animation = {\
+            "windows, 1, 6, wind, slide",\
+            "windowsIn, 1, 6, winIn, slide",\
+            "windowsOut, 1, 5, winOut, slide",\
+            "windowsMove, 1, 5, wind, slide",\
+            "border, 1, 1, liner",\
+            "borderangle, 1, 180, liner, loop",\
+            "fade, 1, 10, default",\
+            "workspaces, 1, 5, wind",\
+            "layers, 1, 5, default, fade"\
+        }\
+    } \
+})' \
         "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
 
       # Keep the desktop widget picker visibly translucent. This submenu uses
@@ -205,6 +244,12 @@ let
       sed -i \
         's|color: Appearance.colors.colLayer0|color: Qt.rgba(Appearance.colors.colLayer0.r, Appearance.colors.colLayer0.g, Appearance.colors.colLayer0.b, 0.14)|' \
         "$config_root/quickshell.end4-new/end4-pC/modules/common/widgets/WidgetsSubmenu.qml"
+
+      # end4 defaults to KDE's Bluetooth KCM, which is not part of this
+      # Hyprland installation. Use the installed Blueman manager instead.
+      sed -i \
+        's|property string bluetooth: "kcmshell6 kcm_bluetooth"|property string bluetooth: "blueman-manager"|' \
+        "$config_root/quickshell.end4-new/end4-pC/modules/common/Config.qml"
 
       # Install the custom lock-screen visual layer while leaving the upstream
       # PAM context and password controls untouched.
@@ -351,6 +396,7 @@ in
     material-symbols
     matugen
     networkmanagerapplet
+    nwg-displays
     pavucontrol
     playerctl
     procps
