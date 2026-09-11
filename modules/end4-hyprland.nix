@@ -210,34 +210,43 @@ let
       # Replace the disabled animations with a full animation config for smooth
       # workspace switching and window movement transitions. Inject directly into
       # main.lua instead of using source to avoid syntax issues.
+      
+      # First, delete the line that disables animations
       sed -i '/hl\.config({ animations = { enabled = false } })/d' \
         "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
       
-      # Insert the full animations config after the "layout = dwindle" line
-      sed -i '/hl\.config({ general = { layout = "dwindle" } })/a\
-hl.config({ \
-    animations = { \
-        enabled = true,\
-        bezier = {\
-            "wind, 0.05, 0.9, 0.1, 1.05",\
-            "winIn, 0.1, 1.1, 0.1, 1.1",\
-            "winOut, 0.3, -0.3, 0, 1",\
-            "liner, 1, 1, 1, 1"\
-        },\
-        animation = {\
-            "windows, 1, 6, wind, slide",\
-            "windowsIn, 1, 6, winIn, slide",\
-            "windowsOut, 1, 5, winOut, slide",\
-            "windowsMove, 1, 5, wind, slide",\
-            "border, 1, 1, liner",\
-            "borderangle, 1, 180, liner, loop",\
-            "fade, 1, 10, default",\
-            "workspaces, 1, 5, wind",\
-            "layers, 1, 5, default, fade"\
-        }\
-    } \
-})' \
+      # Create a temporary file with the animations config
+      cat > "$config_root/hypr.end4-new/hyprland/shellOverrides/animations.tmp" << 'ANIM_EOF'
+hl.config({ 
+    animations = { 
+        enabled = true,
+        bezier = {
+            "wind, 0.05, 0.9, 0.1, 1.05",
+            "winIn, 0.1, 1.1, 0.1, 1.1",
+            "winOut, 0.3, -0.3, 0, 1",
+            "liner, 1, 1, 1, 1"
+        },
+        animation = {
+            "windows, 1, 6, wind, slide",
+            "windowsIn, 1, 6, winIn, slide",
+            "windowsOut, 1, 5, winOut, slide",
+            "windowsMove, 1, 5, wind, slide",
+            "border, 1, 1, liner",
+            "borderangle, 1, 180, liner, loop",
+            "fade, 1, 10, default",
+            "workspaces, 1, 5, wind",
+            "layers, 1, 5, default, fade"
+        }
+    } 
+})
+ANIM_EOF
+      
+      # Insert the animations config after the "layout = dwindle" line using awk
+      awk '/hl\.config\({ general = { layout = "dwindle" } }\)/ {print; system("cat \"$config_root/hypr.end4-new/hyprland/shellOverrides/animations.tmp\""); next} 1' \
+        "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua" > "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua.new"
+      mv "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua.new" \
         "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
+      rm -f "$config_root/hypr.end4-new/hyprland/shellOverrides/animations.tmp"
 
       # Keep the desktop widget picker visibly translucent. This submenu uses
       # its own opaque Material layer instead of the global panel background.
