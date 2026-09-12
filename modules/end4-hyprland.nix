@@ -208,15 +208,23 @@ let
         "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
       
       # Replace the disabled animations with a full animation config for smooth
-      # workspace switching and window movement transitions. Inject directly into
-      # main.lua instead of using source to avoid syntax issues.
+      # workspace switching and window movement transitions.
       
-      # First, delete the line that disables animations
+      # The upstream config always places "animations = { enabled = false }" at
+      # the end of main.lua. We need to delete that line and insert our full
+      # animations config after the "layout = dwindle" line.
+      
+      # First, delete ALL lines that disable animations
       sed -i '/hl\.config({ animations = { enabled = false } })/d' \
         "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
       
-      # Create a temporary file with the animations config
-      cat > "$config_root/hypr.end4-new/hyprland/shellOverrides/animations.tmp" << 'ANIM_EOF'
+      # Find the line number of "layout = dwindle" and insert animations config after it
+      line_num=$(grep -n 'layout = "dwindle"' "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua" | cut -d: -f1)
+      if [ -n "$line_num" ]; then
+        # Create animations config block
+        {
+          head -n "$line_num" "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
+          cat << 'ANIM_EOF'
 hl.config({ 
     animations = { 
         enabled = true,
@@ -240,13 +248,11 @@ hl.config({
     } 
 })
 ANIM_EOF
-      
-      # Insert the animations config after the "layout = dwindle" line using awk
-      awk '/hl\.config\({ general = { layout = "dwindle" } }\)/ {print; system("cat \"$config_root/hypr.end4-new/hyprland/shellOverrides/animations.tmp\""); next} 1' \
-        "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua" > "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua.new"
-      mv "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua.new" \
-        "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
-      rm -f "$config_root/hypr.end4-new/hyprland/shellOverrides/animations.tmp"
+          tail -n "+$((line_num + 1))" "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
+        } > "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua.tmp"
+        mv "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua.tmp" \
+          "$config_root/hypr.end4-new/hyprland/shellOverrides/main.lua"
+      fi
 
       # Keep the desktop widget picker visibly translucent. This submenu uses
       # its own opaque Material layer instead of the global panel background.
