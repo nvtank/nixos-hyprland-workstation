@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, unstablePkgs, ... }:
 
 {
   imports = [
@@ -15,6 +15,7 @@
     ./modules/packages.nix
     ./modules/dev.nix
     ./modules/maintenance.nix
+    ./modules/coccoc.nix
   ];
 
   # Cho phép cài package unfree như spotify, google-chrome, kiro, nvidia...
@@ -75,7 +76,6 @@
   environment.systemPackages = with pkgs; [
     # Browser / desktop apps
     firefox
-    spotify
     zotero
 
     # Kiro AI IDE + CLI
@@ -93,7 +93,6 @@
     pkg-config
 
     # Terminal / CLI tools
-    gemini-cli
     awscli2
     ssm-session-manager-plugin
     terraform
@@ -106,7 +105,6 @@
     gnomeExtensions.user-themes
     gnome-tweaks
     sassc
-    google-chrome
     # Docker
     docker-compose
 
@@ -117,8 +115,6 @@
 
     # Database / backend tools
     postgresql
-    mongosh
-
   ];
 
   system.stateVersion = "25.11";

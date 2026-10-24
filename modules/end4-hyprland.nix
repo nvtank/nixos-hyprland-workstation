@@ -288,6 +288,22 @@ ANIM_EOF
       mv "$config_root/hypr.end4-new" "$config_root/hypr"
       mv "$config_root/quickshell.end4-new" "$config_root/quickshell"
 
+      # Ensure illogical-impulse config directory exists with write permissions
+      # This directory stores the persistent config.json for wallpaper and settings
+      mkdir -p "$config_root/illogical-impulse"
+      chmod -R u+w "$config_root/illogical-impulse" 2>/dev/null || true
+      
+      # If config.json exists but is read-only, make it writable
+      if [[ -f "$config_root/illogical-impulse/config.json" ]]; then
+        chmod u+w "$config_root/illogical-impulse/config.json"
+      fi
+
+      # Ensure quickshell state directory has write permissions
+      # This is critical for switchwall.sh to write generated color schemes
+      state_root="''${XDG_STATE_HOME:-$HOME/.local/state}"
+      mkdir -p "$state_root/quickshell/user/generated/terminal"
+      chmod -R u+w "$state_root/quickshell" 2>/dev/null || true
+
       ln -sfn "$backup_dir" "$state_root/current-backup"
       printf '%s\n' "$backup_dir" > "$state_root/last-install"
 
