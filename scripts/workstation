@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-help}" in
+  help|--help|-h)
+    echo 'workstation {info|doctor|update [repository|inputs]|rebuild [build|test|switch|boot]|themes|edit}'
+    echo 'Set WORKSTATION_FLAKE to a reviewed flake reference including #host before rebuild/update.'
+    ;;
+  info)
+    uname -m
+    hostname
+    readlink -f /run/current-system
+    echo "Flake: ${WORKSTATION_FLAKE:-unset}"
+    ;;
+  doctor)
+    failed=0
+    for cmd in nix git; do command -v "$cmd" || failed=1; done
+    test -e /run/current-system || failed=1
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+      systemctl --user --failed --no-pager
+      if command -v hyprctl >/dev/null; then hyprctl configerrors || failed=1; fi
+      if command -v qs >/dev/null; then qs --version || failed=1; fi
+      systemctl is-active display-manager.service || failed=1
+    fi
+    exit "$failed"
+    ;;
+  rebuild)
+    : "${WORKSTATION_FLAKE:?Set WORKSTATION_FLAKE=/absolute/path#host}"
+    case "${2:-build}" in
+      build) exec nixos-rebuild build --flake "$WORKSTATION_FLAKE" ;;
+      test|switch|boot) exec sudo nixos-rebuild "$2" --flake "$WORKSTATION_FLAKE" ;;
+      *) echo 'Expected build, test, switch or boot' >&2; exit 2 ;;
+    esac
+    ;;
+  update)
+    : "${WORKSTATION_FLAKE:?Set WORKSTATION_FLAKE=/absolute/path#host}"
+    directory="${WORKSTATION_FLAKE%%#*}"
+    directory="${directory#path:}"
+    case "${2:-repository}" in
+      repository) exec git -C "$directory" pull --ff-only ;;
+      inputs) echo 'Updating pinned inputs explicitly; build and test before switching.'; exec nix flake update --flake "$directory" ;;
+      *) echo 'Expected repository or inputs' >&2; exit 2 ;;
+    esac
+    ;;
+  edit)
+    : "${WORKSTATION_FLAKE:?Set WORKSTATION_FLAKE=/absolute/path#host}"
+    directory="${WORKSTATION_FLAKE%%#*}"
+    directory="${directory#path:}"
+    cd -- "$directory"
+    exec "${EDITOR:-vi}" .
+    ;;
+  themes)
+    [[ "$EUID" != 0 ]] || { echo 'Run as your desktop user' >&2; exit 1; }
+    target="${XDG_CONFIG_HOME:-$HOME/.config}/btop/themes"
+    mkdir -p "$target"
+    if [[ ! -e "$target/catppuccin_mocha.theme" ]]; then
+      cp /etc/btop/catppuccin_mocha.theme "$target/"
+    fi
+    echo 'Btop theme installed if missing. Existing Bat themes are preserved; no network downloads.'
+    ;;
+  *) echo 'Unknown command. Run workstation help.' >&2; exit 2 ;;
+esac

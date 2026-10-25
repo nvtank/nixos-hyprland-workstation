@@ -1,0 +1,29 @@
+name: Validate workstation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: shellcheck install.sh scripts/*.sh scripts/workstation install-coccoc.sh tests/*.sh
+      - run: bash tests/installer.sh
+      - run: bash tests/installer-flow.sh
+      - run: python3 tests/end4-rollback.py
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Check Nix formatting
+        run: git ls-files -z '*.nix' | xargs -0 nix fmt -- --check
+      - name: Evaluate profiles, example, personal host and options
+        run: nix flake check --no-build --no-write-lock-file
+      - name: Run isolated checks (does not build complete desktops)
+        run: nix flake check --no-write-lock-file

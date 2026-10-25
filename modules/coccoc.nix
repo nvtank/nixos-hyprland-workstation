@@ -12,8 +12,18 @@ let
 
     nativeBuildInputs = with pkgs; [
       autoPatchelfHook
-      dpkg
-      wrapGAppsHook
+      binutils
+      makeWrapper
+    ];
+
+    # Ignore missing Qt libraries - they are optional for the browser
+    autoPatchelfIgnoreMissingDeps = [
+      "libQt5Core.so.5"
+      "libQt5Gui.so.5"
+      "libQt5Widgets.so.5"
+      "libQt6Core.so.6"
+      "libQt6Gui.so.6"
+      "libQt6Widgets.so.6"
     ];
 
     buildInputs = with pkgs; [
@@ -58,7 +68,11 @@ let
 
     unpackPhase = ''
       runHook preUnpack
-      dpkg-deb -x $src .
+
+      # Giải nén .deb mà không cần setuid permissions
+      ar x $src
+      tar xf data.tar.xz --warning=no-unknown-keyword
+
       runHook postUnpack
     '';
 
@@ -71,11 +85,7 @@ let
 
       # Create wrapper script
       mkdir -p $out/bin
-      cat > $out/bin/coccoc-browser << 'EOF'
-      #!${pkgs.bash}/bin/bash
-      exec $out/coccoc/coccoc-browser "$@"
-      EOF
-      chmod +x $out/bin/coccoc-browser
+      makeWrapper "$out/coccoc/coccoc-browser" "$out/bin/coccoc-browser"
 
       # Symlink
       ln -s $out/bin/coccoc-browser $out/bin/coccoc

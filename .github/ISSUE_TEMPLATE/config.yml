@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security reporting
+    url: https://github.com/nvtank/nixos-hyprland-workstation/security/policy
+    about: Do not disclose sensitive vulnerabilities in public issues.

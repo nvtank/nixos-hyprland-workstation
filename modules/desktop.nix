@@ -7,8 +7,8 @@
   # GNOME + GDM
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
-  
-  # GNOME 
+
+  # GNOME
   programs.dconf.enable = true;
 
   # Âm thanh (PipeWire)
@@ -26,7 +26,7 @@
 
   # Flatpak
   services.flatpak.enable = true;
- 
+
   # Firewall
   networking.firewall.enable = true;
 }
