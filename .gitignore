@@ -2,3 +2,9 @@ result
 *.swp
 *.swo
 .DS_Store
+.workstation/
+__pycache__/
+*.pyc
+.env
+*.pem
+*.key

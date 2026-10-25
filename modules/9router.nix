@@ -1,7 +1,13 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   docker = pkgs.docker_29;
+  image = config.workstation.applications.router9.image or "ghcr.io/decolua/9router:latest";
 in
 {
   # Docker already enabled in configuration.nix
@@ -9,7 +15,10 @@ in
   # Create systemd service for 9router
   systemd.services.router9 = {
     description = "9Router - AI Model Router";
-    after = [ "docker.service" "network.target" ];
+    after = [
+      "docker.service"
+      "network.target"
+    ];
     requires = [ "docker.service" ];
     wantedBy = [ "multi-user.target" ];
 
@@ -21,16 +30,17 @@ in
         "-${docker}/bin/docker stop 9router"
         "-${docker}/bin/docker rm 9router"
         # Pull or update the container
-        "${docker}/bin/docker pull ghcr.io/decolua/9router:latest"
+        "${docker}/bin/docker pull ${image}"
       ];
       ExecStart = [
         # Start the container
-        ''${docker}/bin/docker run -d \
-          --name 9router \
-          --restart unless-stopped \
-          -p 3001:3000 \
-          -v /var/lib/9router:/app/.data \
-          ghcr.io/decolua/9router:latest''
+        ''
+          ${docker}/bin/docker run -d \
+                    --name 9router \
+                    --restart unless-stopped \
+                    -p 127.0.0.1:3001:3000 \
+                    -v /var/lib/9router:/app/.data \
+                    ${image}''
       ];
       ExecStop = [
         "${docker}/bin/docker stop 9router"
@@ -41,7 +51,7 @@ in
 
   # Create data directory
   systemd.tmpfiles.rules = [
-    "d /var/lib/9router 0755 nvtank users -"
+    "d /var/lib/9router 0750 root root -"
   ];
 
   # Add convenience wrapper script
