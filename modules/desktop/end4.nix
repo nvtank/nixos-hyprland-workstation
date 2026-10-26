@@ -9,8 +9,9 @@
 let
   inputs = workstationInputs;
   system = pkgs.stdenv.hostPlatform.system;
-  hyprlandPackage = import ../../lib/hyprland-package.nix { inherit lib pkgs workstationInputs; };
-  hyprlandPortal = inputs.hyprland.packages.${system}.xdg-desktop-portal-hyprland;
+  desktopPackages = import ../../lib/hyprland-packages.nix { inherit lib pkgs workstationInputs; };
+  hyprlandPackage = desktopPackages.hyprland;
+  hyprlandPortal = desktopPackages.portal;
   quickshellPackage = inputs.quickshell.packages.${system}.default;
   end4Quickshell = pkgs.stdenv.mkDerivation {
     pname = "end4-quickshell";
