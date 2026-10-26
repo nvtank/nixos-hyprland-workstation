@@ -116,6 +116,17 @@
         example = fixtures.desktop;
       };
       formatter.${system} = pkgs.nixfmt-rfc-style;
+      devShells.${system}.default = pkgs.mkShellNoCC {
+        packages = with pkgs; [
+          bash
+          git
+          python3
+          pciutils
+          hostname
+          shellcheck
+          nixfmt-rfc-style
+        ];
+      };
       checks.${system} =
         builtins.mapAttrs
           (

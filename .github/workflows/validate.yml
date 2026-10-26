@@ -25,5 +25,7 @@ jobs:
         run: git ls-files -z '*.nix' | xargs -0 nix fmt -- --check
       - name: Evaluate profiles, example, personal host and options
         run: nix flake check --no-build --no-write-lock-file
+      - name: Evaluate real installer candidates from independent hosts
+        run: bash tests/clean-install.sh
       - name: Run isolated checks (does not build complete desktops)
         run: nix flake check --no-write-lock-file

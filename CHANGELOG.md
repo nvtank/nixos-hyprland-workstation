@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — clean installation follow-up
+
+- Read Hyprland's version metadata from the pinned input instead of its generated
+  fileset path, addressing evaluation failure on a fresh GitHub Nix 2.35 runner.
+- Add a pinned `nix develop` environment for installer prerequisites.
+- Resume reviewed candidates with `--candidate` and provide a Full preset option
+  without cloud tools; read actual candidate options before activation.
+- Add real wrapper evaluation for independent flake/non-flake hosts and test the
+  resume/build-only path. Rewrite README with concrete staged installation steps.
+
 ## Unreleased — portable workstation refactor
 
 - Isolate personal hardware/account/base/application/maintenance policy under

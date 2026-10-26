@@ -27,7 +27,10 @@ They do not build all full system closures. The tests cover independent
 usernames/homes, hostnames, absent personal user/disk settings, profile defaults,
 GPU assertions and installer backup/failure behavior. Bash tests use temporary
 sources and mock Nix commands where a build would otherwise be required.
-No test calls sudo or activates a host.
+No test calls sudo or activates a host. `bash tests/clean-install.sh` runs
+outside Nix build sandboxes: it uses a real Nix daemon to lock/evaluate generated
+flake and non-flake wrapper candidates. CI runs it on a fresh runner. This is
+separate from mocked script-flow tests.
 
 For a real candidate or personal host, build the closure separately:
 

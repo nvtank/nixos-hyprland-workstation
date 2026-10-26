@@ -5,6 +5,27 @@ existing lock. No system generation was activated; no host was rebooted. Local
 Nix commands used `path:/etc/nixos` to include newly created files without staging
 or committing them. No GitHub workflow run is claimed.
 
+## Follow-up: fresh installation validation (2026-10-26)
+
+The initial GitHub push/PR checks passed the scripts job but failed Nix evaluation:
+[run 40210884233](https://github.com/nvtank/nixos-hyprland-workstation/actions/runs/40210884233).
+The runner used Nix 2.35.4 and could not read Hyprland's `VERSION` from a generated
+fileset store path. Earlier local results used Nix 2.31.5 and an existing store;
+they did not establish cold-runner compatibility.
+
+`lib/hyprland-package.nix` now supplies that same version metadata from the pinned
+input directly, without changing upstream source revisions or `flake.lock`.
+CI additionally runs `tests/clean-install.sh`, which generates and evaluates
+real Desktop candidates for independent flake and non-flake host configurations.
+Those tests check preserved host/home/filesystem choices, AMD, both desktops and
+absence of the original owner's account/NVIDIA settings. They never activate a
+system. Remote verification of this follow-up is recorded with its pull request.
+
+The installer has a pinned development shell, a resumable `--candidate` workflow,
+a `--without-cloud-tools` choice and a Python-version preflight check. Mocked
+resume/build-only tests, ShellCheck, Python rollback tests and Nix formatting
+passed locally. Fresh-runner results remain distinct from graphical hardware tests.
+
 ## Completed
 
 | Check | Result |

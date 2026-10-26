@@ -4,12 +4,14 @@
   workstationInputs,
   ...
 }:
+let
+  desktopPackages = import ../../lib/hyprland-packages.nix { inherit lib pkgs workstationInputs; };
+in
 {
   programs.hyprland = {
     enable = true;
-    package = workstationInputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-    portalPackage =
-      workstationInputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
+    package = desktopPackages.hyprland;
+    portalPackage = desktopPackages.portal;
     withUWSM = false;
   };
   services.displayManager.defaultSession = lib.mkDefault "hyprland";

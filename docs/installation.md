@@ -5,7 +5,8 @@
 Use an existing, working NixOS system and a normal account. Keep a known-good
 boot generation, recovery console and independent personal-data backup. Ensure
 flakes are enabled in your current configuration. No partitioning or OS
-bootstrap is supported. Read `./install.sh --help` for the exact flags.
+bootstrap is supported. Read `./install.sh --help` for the exact flags. `nix develop` provides the pinned
+installer tools; the README shows the complete beginner path.
 
 Requirements: x86_64 Linux, Bash, Git, Nix, Python 3.12+, tar, coreutils (including
 realpath), hostname; sudo/nixos-rebuild/systemctl for activation. Dependencies
@@ -60,23 +61,27 @@ The first validation locks the *new wrapper flake*. It does not update the
 existing project's lock or any pinned workstation inputs. Commit the generated
 flake/lock into a private host repository if you want to maintain it long term.
 
-For a complete interactive build/test/switch flow, run `./install.sh` into a
-fresh candidate directory. It prints a diff and asks for explicit temporary
-activation. After testing login/network/GPU, it offers a persistent switch.
-A `test` changes the running system but not the default boot generation. If it
-fails, return to the original generation using [recovery](rollback.md).
-
-To activate a candidate you prepared manually:
+Resume the **same reviewed candidate**, including any local edits:
 
 ```bash
-sudo nixos-rebuild test --flake path:/absolute/path/to/candidate#workstation --no-write-lock-file
-# Verify actual login, graphics, networking and services first.
-sudo nixos-rebuild switch --flake path:/absolute/path/to/candidate#workstation --no-write-lock-file
+./install.sh --candidate /absolute/path/to/candidate
 ```
 
-Do not point these commands at `hosts/example` or at the personal host on another
-computer. Keep the candidate path after activation. Future rebuilds from your
-original `/etc/nixos` intentionally return to its original configuration.
+This validates/builds it, prints the closure diff and offers explicit temporary
+activation followed by an optional persistent switch. Combine `--candidate`
+with `--non-interactive` for build-only operation, or `--dry-run` for a path check.
+Selection flags such as `--profile`, `--gpu` and `--output` are rejected with
+`--candidate`; edit that candidate's `workstation.nix` instead. Desktop/profile
+verification reads the actual candidate options before activation.
+
+A `test` changes the running system but not the default boot generation. If it
+fails, return to the original generation using [recovery](rollback.md). Keep a
+second terminal or TTY, since a graphical session may close during activation.
+Keep the candidate directory after switching; it is your installed source tree.
+Future rebuilds from the original `/etc/nixos` return to its original configuration.
+
+For a fresh one-pass interactive flow, use `./install.sh`. Do not point commands
+at `hosts/example` or at the personal host on another computer.
 
 ## Automated use
 
@@ -84,11 +89,12 @@ original `/etc/nixos` intentionally return to its original configuration.
 ./install.sh --non-interactive --profile desktop --gpu amd --existing-host YOUR_OUTPUT
 ```
 
-This prepares, validates, builds and prints the diff without activation.
+This prepares, validates, builds and prints the diff without activation. To
+resume an existing candidate, use `./install.sh --candidate PATH --non-interactive`.
 `--dry-run` writes nothing and builds nothing. `--prepare-only` creates source
 snapshots without building or activation. Optional feature flags are
 `--vietnamese`, `--cloud-tools` and `--docker`. Full already defaults cloud tools
-on; to disable them edit the candidate. Terraform requires explicit unfree
+on; use `--without-cloud-tools` when preparing, or disable the option in the candidate. Terraform requires explicit unfree
 permission in your own configuration; a failed license check stops the build.
 
 Automated activation requires `--activate test --allow-activation`; automated

@@ -69,7 +69,8 @@ Core installs the existing rich Zsh tooling and fonts without GNOME, Hyprland,
 Quickshell, language toolchains or proprietary applications. Some terminal tools
 have substantial dependencies; Core is not intended as a minimal server image.
 Full adds stable Node.js 22, Python, JDK17, Maven/Gradle, Go, C/C++ and cloud tools.
-Full does not include every personal/experimental app. Cốc Cốc and Terraform need
+Full does not include every personal/experimental app. The installer flag
+`--without-cloud-tools` installs the language toolchains without cloud packages. Cốc Cốc and Terraform need
 an explicit `nixpkgs.config.allowUnfreePredicate` (or your existing broader policy).
 For example, enable only Terraform when using the Full preset:
 
