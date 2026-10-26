@@ -76,3 +76,11 @@ bash "$scratch/repo/install.sh" --non-interactive --profile desktop --dry-run \
   --config-dir "$scratch/host" --output "$scratch/dry" >/dev/null
 [[ ! -e "$scratch/dry" && ! -s "$MOCK_LOG" ]]
 echo 'Mocked installer flow tests passed'
+
+# A reviewed candidate can be resumed without rereading the original host tree.
+export MOCK_FAIL_BUILD=false
+bash "$scratch/repo/install.sh" --non-interactive --candidate "$scratch/prepared" > "$scratch/resume.log"
+grep -q 'Build passed. No system changes applied.' "$scratch/resume.log"
+if bash "$scratch/repo/install.sh" --candidate "$scratch/prepared" --profile core >/dev/null 2>&1; then
+  echo 'Resume accepted conflicting selection flags' >&2; exit 1
+fi

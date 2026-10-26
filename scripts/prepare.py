@@ -30,8 +30,8 @@ def generate(env):
         'desktop.vietnamese.enable': env['vietnamese'] == 'true',
         'development.docker.enable': env['docker'] == 'true',
     }
-    if env['cloud'] == 'true':
-        module['development.cloudTools.enable'] = True
+    if env['cloud'] in ('true', 'false'):
+        module['development.cloudTools.enable'] = env['cloud'] == 'true'
     if env['profile'] != 'core':
         module['desktop.gnome.enable'] = env['gnome'] == 'true'
         module['desktop.hyprland.enable'] = env['hyprland'] == 'true'
